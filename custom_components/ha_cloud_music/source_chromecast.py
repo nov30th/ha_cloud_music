@@ -43,6 +43,8 @@ class MediaPlayerChromecast():
                 # 判断是否下一曲
                 if media_duration > 0:
                     # Workaround for HA does not sync the entity media_position real time
+                    if entity.state == "paused":
+                        self.state = 'idle'
                     if media_duration - media_position <= 5 or (media_position == 0 and entity.state == 'idle'):
                         print('执行下一曲方法')
                         if self._media is not None and self.state == 'playing' and self.count > 0:
@@ -50,9 +52,9 @@ class MediaPlayerChromecast():
                             self.state = 'idle'
                             self._media.media_end_next()
                     # 最后10秒时，实时更新
-                    elif media_duration - media_position < 10:
-                        print("当前进度：%s，总时长：%s"%(media_position, media_duration))
-                        hass.async_create_task(hass.services.async_call('homeassistant', 'update_entity', {'entity_id': self.entity_id}))
+                    # elif media_duration - media_position < 10:
+                    #     print("当前进度：%s，总时长：%s"%(media_position, media_duration))
+                    # hass.async_create_task(hass.services.async_call('homeassistant', 'update_entity', {'entity_id': self.entity_id}))
                 
                 # 防止通信太慢，导致进度跟不上自动下下一曲
                 self.count = self.count + 1
@@ -68,7 +70,7 @@ class MediaPlayerChromecast():
             print('出现异常', e)
         # 递归调用自己
         self.timer = threading.Timer(2, self.update)
-        self.timer.start()  
+        self.timer.start()
 
     def reloadURL(self, url, position, metadata=None):
         # 重新加载URL
