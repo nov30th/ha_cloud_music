@@ -1,6 +1,7 @@
 import time, datetime
 import threading
 
+
 class MediaPlayerOther():
 
     # 初始化
@@ -41,22 +42,23 @@ class MediaPlayerOther():
                 # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
                 # 判断是否下一曲
                 if media_duration > 0:
-                    if media_duration - media_position <= 5 or (media_position == 0 and entity.state == 'idle'):
+                    if media_duration - media_position <= 3:
                         print('执行下一曲方法')
                         if self._media is not None and self.state == 'playing' and self.is_tts == False and self.is_on == True and self.count > 0:
                             self.count = -5
-                            self.state = 'idle'                            
+                            self.state = 'idle'
                             self._media.media_end_next()
                     # 最后10秒时，实时更新
                     elif media_duration - media_position < 10:
-                        print("当前进度：%s，总时长：%s"%(media_position, media_duration))
-                        hass.async_create_task(hass.services.async_call('homeassistant', 'update_entity', {'entity_id': self.entity_id}))
-                
+                        print("当前进度：%s，总时长：%s" % (media_position, media_duration))
+                        hass.async_create_task(
+                            hass.services.async_call('homeassistant', 'update_entity', {'entity_id': self.entity_id}))
+
                 # 防止通信太慢，导致进度跟不上自动下下一曲
                 self.count = self.count + 1
                 if self.count > 100:
                     self.count = 0
-                
+
                 # 正常获取值
                 self.media_position = media_position
                 self.media_duration = media_duration
@@ -66,9 +68,9 @@ class MediaPlayerOther():
             print('出现异常', e)
         # 递归调用自己
         self.timer = threading.Timer(2, self.update)
-        self.timer.start()  
+        self.timer.start()
 
-    def reloadURL(self, url, position):        
+    def reloadURL(self, url, position):
         # 重新加载URL
         self.load(url)
         time.sleep(1)
@@ -79,7 +81,7 @@ class MediaPlayerOther():
         time.sleep(1)
         self.set_volume_level(self._media.volume_level)
 
-    def load(self, url):        
+    def load(self, url):
         # 加载URL
         url = url.replace("https://", "http://")
         self.call_service('play_media', {
@@ -94,12 +96,12 @@ class MediaPlayerOther():
         # 播放
         self.state = 'playing'
         self.call_service('media_play', {})
-    
+
     def pause(self):
         # 暂停
         self.state = 'paused'
         self.call_service('media_pause', {})
-    
+
     def seek(self, position):
         # 设置进度
         self.call_service('media_seek', {'seek_position': position})
