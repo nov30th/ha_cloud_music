@@ -44,7 +44,7 @@ class MediaPlayerChromecast():
                 if media_duration > 0:
                     # Workaround for HA does not sync the entity media_position real time
                     if entity.state == "paused":
-                        self.state = 'idle'
+                        self.stop()
                     if media_duration - media_position <= 5 or (media_position == 0 and entity.state == 'idle'):
                         print('执行下一曲方法')
                         if self._media is not None and self.state == 'playing' and self.count > 0:
