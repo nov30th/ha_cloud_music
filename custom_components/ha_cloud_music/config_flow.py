@@ -17,10 +17,32 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
+    async def get_media_players(self):
+        all_media_player = dict()
+        all_entities = await self.hass.async_add_executor_job(self.hass.states.all)
+        for e in all_entities:
+            if e.entity_id.startswith("media_player."):
+                all_media_player.update({e.entity_id: e.name})
+        return all_media_player
+
+    async def get_media_player_types(self):
+        media_player_types: dict = {
+            "chromecast": "谷歌Nest Entity",
+            "entity": "其他HA内置 Entity",
+            "web": "网页播放器",
+            "windows": "Windows应用",
+            "mpd": "MPD播放器",
+            "vlc": "VLC播放器"
+        }
+        return media_player_types
+
     async def async_step_user(self, user_input=None):        
         errors = {}
         if DOMAIN in self.hass.data:
             return self.async_abort(reason="single_instance_allowed")
+
+        media_players = await self.get_media_players()
+        media_player_types = await self.get_media_player_types()
 
         # 如果输入内容不为空，则进行验证
         if user_input is not None:
@@ -30,6 +52,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # 显示表单
         DATA_SCHEMA = vol.Schema({
             vol.Required("api_url", default="https://netease-cloud-music-api-7k8q.vercel.app"): str,
+            vol.Required("media_player_type"): vol.In(media_player_types),
+            vol.Optional("media_player"): vol.In(media_players),
             vol.Optional("mpd_host"): str,
             vol.Optional("is_voice", default=True): bool,
         })

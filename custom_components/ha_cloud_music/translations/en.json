@@ -6,8 +6,10 @@
                 "description": "项目: https://github.com/shaonianzhentan/ha_cloud_music",
                 "data": {
                     "api_url": "网易云音乐接口地址",
-                    "mpd_host": "MPD播放器host",
-                    "is_voice": "启用语音控制"                    
+                    "mpd_host": "当使用MPD播放器时，Host地址",
+                    "is_voice": "启用语音控制",
+                    "media_player_type": "源播放器类型",
+                    "media_player": "当使用内置HA Entity时"
                 }
             }
         },

@@ -84,8 +84,12 @@ class ApiConfig():
     def get_sound_mode(self):
         return self.read('sound_mode.json')
 
-    def set_sound_mode(self, sound_mode):
-        self.write('sound_mode.json', {'state': sound_mode})
+    def set_sound_mode(self, media_player_type, media_player, mpd_host):
+        self.write('sound_mode.json', {
+            'media_player_type': media_player_type,
+            'media_player': media_player,
+            'mpd_host': mpd_host
+        })
 
     # 加密
     def md5(self, data):

@@ -35,6 +35,7 @@ from .source_vlc import MediaPlayerVLC
 from .source_mpd import MediaPlayerMPD
 from .source_other import MediaPlayerOther
 from .source_windows import MediaPlayerWindows
+from .source_chromecast import MediaPlayerChromecast
 
 
 async def async_setup_entry(hass, entry, async_add_entities) -> None:
@@ -131,6 +132,7 @@ class MediaPlayer(MediaPlayerEntity):
     def __init__(self, hass, config, api_config):
         self._config = config
         self.api_config = api_config
+        self._media_player_type = None
 
         self._hass = hass
         self.music_playlist = None
@@ -165,7 +167,9 @@ class MediaPlayer(MediaPlayerEntity):
 
         _sound_mode_list = ['网页播放器', 'Windows应用']
             
-        mpd_host = config.get('mpd_host', '')
+        mpd_host = config.get('mpd_host', None)
+        media_player_type = config.get('media_player_type')
+        media_player_entity = config.get('media_player', None)
         # 如果是Docker环境，则不显示VLC播放器
         if os.path.isfile("/.dockerenv") == True and mpd_host != '':
             _sound_mode_list.append('MPD播放器')
@@ -178,9 +182,16 @@ class MediaPlayer(MediaPlayerEntity):
         self._sound_mode_list = _sound_mode_list
         self._sound_mode = None
         # 读取播放器配置
-        res = self.api_config.get_sound_mode()
-        if res is not None:
-            self.select_sound_mode(res['state'])
+        if mpd_host is not None or media_player_entity is not None:
+            self.select_sound_mode(media_player_type, media_player_entity, mpd_host)
+        else:
+            res = self.api_config.get_sound_mode()
+            if res is not None:
+                self.select_sound_mode(
+                    res['media_player_type'],
+                    res['media_player_entity'],
+                    res['mpd_host']
+                )
 
         # 读取音乐列表
         try:
@@ -481,7 +492,16 @@ class MediaPlayer(MediaPlayerEntity):
             self.notify("请重新选择源播放器", "error")
         else:
             self.media_url = url
-            self._media_player.load(url)
+            if self._media_player_type == "chromecast":
+                self._media_player.load(url,
+                                        {
+                                                     "images": [{"url": self._media_image_url}],
+                                                     "title": self._media_title,
+                                                     "artist": self._media_artist,
+                                                     "albumName": self._media_album_name
+                                        })
+            else:
+                self._media_player.load(url)
 
     # 音乐结束自动下一曲
     def media_end_next(self):        
@@ -518,17 +538,20 @@ class MediaPlayer(MediaPlayerEntity):
         self.music_load()
         self.update_entity()
         
-    def select_sound_mode(self, sound_mode):
-        print(sound_mode)
+    def select_sound_mode(self, media_player_type, media_player_entity, mpd_host):
+        # sound_mode = ""
+        # print(sound_mode)
         # 相同不做处理
-        if self._sound_mode == sound_mode:
+        if self._sound_mode is not None and \
+                (self._sound_mode == mpd_host or self._sound_mode == media_player_entity):
             return None
-        
+        self._media_player_type = media_player_type
+
         # 如果当前正在播放，则保存相关信息
         is_playing = self.state == STATE_PLAYING
         media_url = self.media_url
         media_position = self.media_position
-        
+
         # 选择播放器
         if self._media_player is not None:
             try:
@@ -538,34 +561,53 @@ class MediaPlayer(MediaPlayerEntity):
                 print(ex)
                 self._media_player = None
                 self.notify(self._sound_mode + "连接异常", "error")
-        if sound_mode == '网页播放器':
+        if media_player_type == 'web':
             self._media_player = MediaPlayerWEB(self._config, self)
-        elif sound_mode == 'Windows应用':
-            self._media_player = MediaPlayerWindows(self._config, self)            
-        elif sound_mode == 'MPD播放器':
+            self._sound_mode = media_player_type
+        elif media_player_type == 'windows':
+            self._media_player = MediaPlayerWindows(self._config, self)
+            self._sound_mode = media_player_type
+        elif media_player_type == 'mpd':
             # 判断是否配置mpd_host
+            self._sound_mode = mpd_host
             if 'mpd_host' not in self._config:
                 self.notify("MPD播放器需要配置mpd_host", "error")
                 self._media_player = None
+                self._sound_mode = None
             self._media_player = MediaPlayerMPD(self._config, self)
             if self._media_player.is_support == False:
                 self.notify("不支持MPD播放器，请确定是否正确配置", "error")
                 self._media_player = None
-        elif sound_mode == 'VLC播放器':
+                self._sound_mode = None
+        elif media_player_type == 'vlc':
             self._media_player = MediaPlayerVLC(self._config, self)
+            self._sound_mode = media_player_type
             if self._media_player.is_support == False:
                 self.notify("当前系统不支持VLC播放器", "error")
                 self._media_player = None
+        elif media_player_type == 'chromecast':
+            self._media_player = MediaPlayerChromecast(media_player_entity, self)
+            self._sound_mode = media_player_entity
         else:
-            self._media_player = MediaPlayerOther(sound_mode, self)
+            self._media_player = MediaPlayerOther(media_player_entity, self)
+            self._sound_mode = media_player_entity
 
         if self._media_player is not None:
-            self._sound_mode = sound_mode
-            self.api_config.set_sound_mode(sound_mode)
-            self.log('【选择源播放器】：%s', sound_mode)
+            self.api_config.set_sound_mode(media_player_type, media_player_entity, mpd_host)
+            self.log('【选择源播放器】：%s %s %s ', media_player_type, media_player_entity, mpd_host)
             # 恢复播放
             if is_playing == True:
-                self._media_player.reloadURL(media_url, media_position)
+                if media_player_type == "chromecast":
+                    self._media_player.reloadURL(media_url, media_position,
+                                                 {
+                                                     "images": [{"url": self._media_image_url}],
+                                                     "title": self._media_title,
+                                                     "artist": self._media_artist,
+                                                     "albumName": self._media_album_name
+                                                 }
+                                                 )
+                else:
+                    self._media_player.reloadURL(media_url, media_position)
 
     async def async_browse_media(self, media_content_type=None, media_content_id=None):
         """Implement the websocket media browsing helper."""
