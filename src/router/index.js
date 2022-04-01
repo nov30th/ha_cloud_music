@@ -40,6 +40,10 @@ const routes = [
         component: () => import('pages/details/details')
       },
       {
+        path: '/music/album/:id', // 音乐详情列表
+        component: () => import('pages/album/album')
+      },
+      {
         path: '/music/historylist', // 我听过的列表
         component: () => import('pages/historyList/historyList'),
         meta: {

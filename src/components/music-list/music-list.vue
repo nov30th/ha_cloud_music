@@ -57,7 +57,10 @@
           <span
             v-else
             class="list-album"
-          >{{ item.album }}</span>
+          ><router-link
+          :to="{ path: `/music/album/${item.albumId}` }"
+          tag="div"
+          >{{ item.album }}</router-link></span>
         </div>
         <slot name="listBtn"></slot>
       </div>

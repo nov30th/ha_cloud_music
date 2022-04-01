@@ -2,6 +2,7 @@ import qs from 'qs'
 import axios from '@/utils/axios'
 import { defaultLimit } from '@/config'
 import { formatTopSongs } from '@/utils/song'
+// import { formatAlbumSongs } from '@/utils/song'
 
 axios.defaults.baseURL = 'https://api.mtnhao.com'
 
@@ -57,6 +58,19 @@ export function getPlaylistDetail(id) {
           playlist.tracks = formatTopSongs(songs)
           resolve(playlist)
         })
+      })
+  })
+}
+
+export function getAlbumDetail(id) {
+  return new Promise((resolve, reject) => {
+    proxyGet('/album', {
+      params: { id }
+    })
+    .then(({ songs }) => songs)
+    .then(songs => {
+          songs.tracks = formatTopSongs(songs)
+          resolve(songs)
       })
   })
 }
