@@ -1,5 +1,11 @@
-import time, datetime
+import datetime
 import threading
+import time
+
+import arrow
+
+from homeassistant.components.media_player import ATTR_MEDIA_POSITION_UPDATED_AT
+
 
 class MediaPlayerChromecast():
 
@@ -29,23 +35,19 @@ class MediaPlayerChromecast():
             # 读取当前实体信息
             entity = hass.states.get(self.entity_id)
             attr = entity.attributes
-            # self.state = entity.state
+
             if 'media_position' in attr:
-                media_position = attr['media_position']
-                # 如果进度是字符串，并且包含冒号
-                if isinstance(media_position, str) and ':' in media_position:
-                    arr = media_position.split(':')
-                    media_position = int(arr[0])
-                    media_duration = int(arr[1])
-                else:
-                    media_duration = attr['media_duration']
+                media_position = float(attr['media_position']) + (datetime.datetime.now().timestamp() - arrow.get(
+                    attr[ATTR_MEDIA_POSITION_UPDATED_AT]).timestamp())
+                media_duration = attr['media_duration']
+
                 # print("当前进度：%s，总时长：%s"%(media_position, media_duration))
                 # 判断是否下一曲
                 if media_duration > 0:
                     # Workaround for HA does not sync the entity media_position real time
                     if entity.state == "paused":
                         self.stop()
-                    if media_duration - media_position <= 5 or (media_position == 0 and entity.state == 'idle'):
+                    if media_duration - media_position <= 2 or (media_position == 0 and entity.state == 'idle'):
                         print('执行下一曲方法')
                         if self._media is not None and self.state == 'playing' and self.count > 0:
                             self.count = -5
@@ -55,12 +57,12 @@ class MediaPlayerChromecast():
                     # elif media_duration - media_position < 10:
                     #     print("当前进度：%s，总时长：%s"%(media_position, media_duration))
                     # hass.async_create_task(hass.services.async_call('homeassistant', 'update_entity', {'entity_id': self.entity_id}))
-                
+
                 # 防止通信太慢，导致进度跟不上自动下下一曲
                 self.count = self.count + 1
                 if self.count > 100:
                     self.count = 0
-                
+
                 # 正常获取值
                 self.media_position = media_position
                 self.media_duration = media_duration
@@ -109,12 +111,12 @@ class MediaPlayerChromecast():
         # 播放
         self.state = 'playing'
         self.call_service('media_play', {})
-    
+
     def pause(self):
         # 暂停
         self.state = 'paused'
         self.call_service('media_pause', {})
-    
+
     def seek(self, position):
         # 设置进度
         self.call_service('media_seek', {'seek_position': position})
