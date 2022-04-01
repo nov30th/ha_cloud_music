@@ -67,10 +67,19 @@ export function getAlbumDetail(id) {
     proxyGet('/album', {
       params: { id }
     })
-    .then(({ songs }) => songs)
-    .then(songs => {
-          songs.tracks = formatTopSongs(songs)
-          resolve(songs)
+      .then(songs => {
+        var myPlaylist = {}
+        myPlaylist = songs.songs
+        for (let index = 0; index < myPlaylist.length; ++index) {
+          if ('al' in myPlaylist[index]) {
+            myPlaylist[index].al.picUrl = songs.album.picUrl
+          }
+          if ('album' in myPlaylist[index]) {
+            myPlaylist[index].album.picUrl = songs.album.picUrl
+          }
+        }
+        myPlaylist.tracks = formatTopSongs(myPlaylist)
+        resolve(myPlaylist)
       })
   })
 }

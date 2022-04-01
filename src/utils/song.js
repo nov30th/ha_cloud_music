@@ -27,7 +27,7 @@ export function createAlbumList(music) {
     name: music.name,
     singer: music.artists.length > 0 && filterSinger(music.artists),
     album: music.album.name,
-    image: toHttps(music.album.picUrl) || null,
+    image: music.album.picUrl || null,
     duration: music.duration / 1000,
     url: `https://music.163.com/song/media/outer/url?id=${music.id}.mp3`,
     albumId: music.album.id
@@ -40,7 +40,7 @@ export function createPlayList(music) {
     name: music.name,
     singer: music.artists.length > 0 && filterSinger(music.artists),
     album: music.album.name,
-    image: toHttps(music.album.artist.img1v1Url) || null,
+    image: music.album.picUrl || null,
     duration: music.duration / 1000,
     url: `https://music.163.com/song/media/outer/url?id=${music.id}.mp3`,
     albumId: music.album.id
@@ -53,7 +53,7 @@ export function createTopList(music) {
     name: music.name,
     singer: music.ar.length > 0 && filterSinger(music.ar),
     album: music.al.name,
-    image: toHttps(music.al.picUrl),
+    image: music.al.picUrl,
     duration: music.dt / 1000,
     url: `https://music.163.com/song/media/outer/url?id=${music.id}.mp3`,
     albumId: music.al.id
