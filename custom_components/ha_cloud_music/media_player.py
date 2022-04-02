@@ -484,6 +484,8 @@ class MediaPlayer(MediaPlayerEntity):
                return
             else:
                 self.notify("正在播放【" + self._media_name + "】", "load_song_url")
+                self.error_count = 0
+
         except Exception as e:
             print('这是一个正常的错误：', e)
 
