@@ -16,6 +16,7 @@ class ApiMusic():
     def __init__(self, media, config):
         self.hass = media._hass
         self.media = media
+        self.is_skip_invalid_music_url = config.get("is_skip_invalid_music_url", True)
         # 网易云音乐接口地址
         self.api_url = config.get("api_url", '').strip('/')
         self.find_api_url = config.get('find_api_url', '').strip('/')
@@ -112,6 +113,8 @@ class ApiMusic():
         result_url = res['url']
         if result_url == 'https://music.163.com/404':
             # 全网搜索音乐
+            if self.is_skip_invalid_music_url:
+                return None
             if self.find_api_url != '':
                 # 如果含有特殊字符，则直接使用名称搜索
                 searchObj = re.search(r'\(|（|：|:《', songName, re.M|re.I)

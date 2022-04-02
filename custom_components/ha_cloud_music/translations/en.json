@@ -30,7 +30,8 @@
                     "tts_before_message": "TTS前置消息",
                     "tts_after_message": "TTS后置消息",
                     "tts_mode": "TTS声音模式",
-                    "is_notify": "启用通知消息"
+                    "is_notify": "启用通知消息",
+                    "is_skip_invalid_music_url": "是否跳过无法播放有版权的歌曲"
                 }
             }
         },

@@ -87,6 +87,7 @@ class OptionsFlowHandler(OptionsFlow):
                 vol.Optional("tts_after_message", default=options.get('tts_after_message', '')): str,
                 vol.Optional("is_notify", default=options.get('is_notify', True)): bool,
                 vol.Optional("tts_mode", default=options.get('tts_mode', 4)): int,
+                vol.Optional("is_skip_invalid_music_url", default=options.get('is_skip_invalid_music_url', True)): bool,
             })
             return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA, errors=errors)
         # 选项更新
